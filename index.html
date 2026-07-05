@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Emarketer Email Marketing</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: #000;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* HEADER */
+.header {
+  text-align: center;
+  padding: 40px 20px 20px;
+  flex-shrink: 0;
+}
+.header h1 {
+  font-size: 36px;
+  font-weight: 900;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  font-style: italic;
+  -webkit-text-stroke: 2px #6a0dad;
+  text-shadow: 2px 2px 0 #6a0dad, -1px -1px 0 #6a0dad;
+}
+
+/* PRODUCT GRID */
+.main {
+  flex: 1;
+  padding: 20px 40px 100px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  align-content: start;
+}
+
+.product-card {
+  background: #fff;
+  border-radius: 24px;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.12s;
+  position: relative;
+  overflow: hidden;
+}
+.product-card:hover { transform: scale(1.02); }
+.product-card:active { transform: scale(0.97); }
+.product-card.selected {
+  background: #333;
+}
+.product-card img {
+  width: 80%; height: 80%;
+  object-fit: contain;
+  pointer-events: none;
+}
+.check-mark {
+  display: none;
+  position: absolute;
+  top: 10px; right: 10px;
+  background: #22c55e;
+  border-radius: 50%;
+  width: 28px; height: 28px;
+  align-items: center; justify-content: center;
+}
+.product-card.selected .check-mark { display: flex; }
+.check-mark svg {
+  width: 16px; height: 16px;
+  stroke: #fff; fill: none;
+  stroke-width: 3; stroke-linecap: round; stroke-linejoin: round;
+}
+
+/* BOTTOM NAV */
+.bottom-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: rgba(20,20,20,0.97);
+  backdrop-filter: blur(10px);
+  border-top: 2px solid #333;
+  display: flex;
+  justify-content: center;
+  gap: 80px;
+  align-items: center;
+  padding: 12px 0 16px;
+  z-index: 100;
+}
+.nav-btn {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 5px;
+  background: none; border: none;
+  cursor: pointer; padding: 4px 20px;
+  position: relative;
+  border-radius: 14px;
+  transition: background 0.15s;
+}
+.nav-btn:hover { background: rgba(255,255,255,0.1); }
+.nav-btn svg {
+  width: 28px; height: 28px;
+  stroke: #fff; fill: none;
+  stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
+.nav-label { font-size: 12px; color: #fff; font-weight: 700; }
+.cart-badge {
+  position: absolute; top: -2px; right: 8px;
+  background: #e83d3d; color: #fff;
+  border-radius: 50%; width: 22px; height: 22px;
+  font-size: 12px; font-weight: 800;
+  display: none; align-items: center; justify-content: center;
+  box-shadow: 0 2px 8px rgba(220,0,0,0.3);
+}
+@keyframes pop { from{transform:scale(0)} to{transform:scale(1)} }
+
+/* CART OVERLAY */
+.overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.35); z-index: 200;
+  align-items: center; justify-content: center;
+}
+.overlay.active { display: flex; }
+
+.cart-sheet {
+  background: #fff;
+  border-radius: 28px;
+  padding: 36px 32px 36px;
+  width: 520px;
+  max-height: 80vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  animation: popIn 0.3s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes popIn { from{transform:scale(0.8);opacity:0} to{transform:scale(1);opacity:1} }
+
+.cart-title {
+  font-size: 22px; font-weight: 800;
+  color: #b040d0; text-align: center; margin-bottom: 24px;
+}
+.cart-items { flex: 1; overflow-y: auto; }
+.cart-item {
+  display: flex; align-items: center; gap: 16px;
+  padding: 12px 0; border-bottom: 1px solid #f0e0ff;
+}
+.cart-item:last-of-type { border-bottom: none; }
+.cart-item-img {
+  width: 70px; height: 70px;
+  border-radius: 14px; background: #f8f0ff;
+  object-fit: contain; flex-shrink: 0; padding: 6px;
+}
+.cart-item-name { font-size: 16px; font-weight: 700; color: #7020a0; }
+
+.continue-btn {
+  margin-top: 24px; width: 100%;
+  background: #22c55e; color: #fff;
+  border: none; border-radius: 18px;
+  padding: 18px; font-size: 20px; font-weight: 900;
+  letter-spacing: 1px; cursor: pointer;
+  box-shadow: 0 6px 20px rgba(34,197,94,0.4);
+  transition: transform 0.12s;
+}
+.continue-btn:hover { transform: scale(1.02); }
+.continue-btn:active { transform: scale(0.98); }
+
+/* DELIVERY */
+.delivery-overlay {
+  display: none; position: fixed; inset: 0; z-index: 300;
+  align-items: center; justify-content: center;
+}
+.delivery-overlay.active {
+  display: flex;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  background: rgba(180,100,220,0.2);
+}
+.delivery-card {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 20px;
+  animation: bigPop 0.5s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes bigPop { from{transform:scale(0.2);opacity:0} to{transform:scale(1);opacity:1} }
+.delivery-icon { font-size: 100px; }
+.delivery-text {
+  font-size: 48px; font-weight: 900; color: #fff;
+  letter-spacing: 3px;
+  animation: glow 1s ease-in-out infinite alternate;
+}
+@keyframes glow {
+  from { text-shadow: 0 0 20px rgba(220,100,255,0.9); }
+  to   { text-shadow: 0 0 50px #fff, 0 0 100px rgba(200,100,255,1); }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Online Retail Marketing</h1>
+</div>
+
+<div class="main">
+  <div class="product-card" id="p0" onclick="toggle(0)"><img src="c1.png" alt="Product 1"><div class="check-mark"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div></div>
+  <div class="product-card" id="p1" onclick="toggle(1)"><img src="c2.png" alt="Product 2"><div class="check-mark"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div></div>
+  <div class="product-card" id="p2" onclick="toggle(2)"><img src="c3.png" alt="Product 3"><div class="check-mark"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div></div>
+  <div class="product-card" id="p3" onclick="toggle(3)"><img src="c4.png" alt="Product 4"><div class="check-mark"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div></div>
+  <div class="product-card" id="p4" onclick="toggle(4)"><img src="c5.png" alt="Product 5"><div class="check-mark"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div></div>
+  <div class="product-card" id="p5" onclick="toggle(5)"><img src="c6.png" alt="Product 6"><div class="check-mark"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div></div>
+  <div class="product-card" id="p6" onclick="toggle(6)"><img src="c7.png" alt="Product 7"><div class="check-mark"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div></div>
+  <div class="product-card" id="p7" onclick="toggle(7)"><img src="c8.png" alt="Product 8"><div class="check-mark"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div></div>
+</div>
+
+<div class="bottom-bar">
+  <button class="nav-btn" onclick="alert('Settings')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    <span class="nav-label">Settings</span>
+  </button>
+  <button class="nav-btn" onclick="alert('Search')">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <span class="nav-label">Search</span>
+  </button>
+  <button class="nav-btn" onclick="openCart()">
+    <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+    <span class="cart-badge" id="cartBadge">0</span>
+    <span class="nav-label">Cart</span>
+  </button>
+</div>
+
+<div class="overlay" id="cartOverlay">
+  <div class="cart-sheet">
+    <div class="cart-title">🛒 Your Cart</div>
+    <div class="cart-items" id="cartItems"></div>
+    <button class="continue-btn" onclick="onContinue()">Continue</button>
+  </div>
+</div>
+
+<div class="delivery-overlay" id="deliveryOverlay">
+  <div class="delivery-card">
+    <div class="delivery-icon">🚗</div>
+    <div class="delivery-text">Delivering...</div>
+  </div>
+</div>
+
+<script>
+var products = [
+  { name: 'Campaign Template 1', src: 'c1.png' },
+  { name: 'Campaign Template 2', src: 'c2.png' },
+  { name: 'Campaign Template 3', src: 'c3.png' },
+  { name: 'Campaign Template 4', src: 'c4.png' },
+  { name: 'Campaign Template 5', src: 'c5.png' },
+  { name: 'Campaign Template 6', src: 'c6.png' },
+  { name: 'Campaign Template 7', src: 'c7.png' },
+  { name: 'Campaign Template 8', src: 'c8.png' }
+];
+
+var selected = {};
+var badge = document.getElementById('cartBadge');
+
+function toggle(i) {
+  var card = document.getElementById('p' + i);
+  if (selected[i]) {
+    delete selected[i];
+    card.classList.remove('selected');
+  } else {
+    selected[i] = true;
+    card.classList.add('selected');
+  }
+  updateBadge();
+}
+
+function updateBadge() {
+  var n = Object.keys(selected).length;
+  badge.style.display = n > 0 ? 'flex' : 'none';
+  badge.textContent = n;
+  badge.style.animation = 'none';
+  badge.offsetHeight;
+  badge.style.animation = 'pop 0.3s cubic-bezier(.34,1.56,.64,1)';
+}
+
+function openCart() {
+  var list = document.getElementById('cartItems');
+  list.innerHTML = '';
+  var keys = Object.keys(selected);
+  if (!keys.length) {
+    list.innerHTML = '<p style="text-align:center;color:#c090e0;padding:20px 0;font-size:16px">Cart is empty</p>';
+  } else {
+    keys.forEach(function(i) {
+      var p = products[i];
+      var row = document.createElement('div'); row.className = 'cart-item';
+      var img = document.createElement('img'); img.className = 'cart-item-img'; img.src = p.src; img.alt = p.name;
+      var nm  = document.createElement('span'); nm.className = 'cart-item-name'; nm.textContent = p.name;
+      row.appendChild(img); row.appendChild(nm); list.appendChild(row);
+    });
+  }
+  document.getElementById('cartOverlay').classList.add('active');
+}
+
+function onContinue() {
+  document.getElementById('cartOverlay').classList.remove('active');
+  document.getElementById('deliveryOverlay').classList.add('active');
+  setTimeout(function() {
+    document.getElementById('deliveryOverlay').classList.remove('active');
+    selected = {}; updateBadge();
+    for (var i = 0; i < 8; i++) document.getElementById('p'+i).classList.remove('selected');
+  }, 4000);
+}
+
+document.getElementById('cartOverlay').addEventListener('click', function(e) { if (e.target===this) this.classList.remove('active'); });
+document.getElementById('deliveryOverlay').addEventListener('click', function() { this.classList.remove('active'); });
+</script>
+</body>
+</html>
